@@ -1,0 +1,222 @@
+
+|> Sewer.map
+   -| One x   -> x
+    | Two y   -> y
+    | Three z -> z
+   >> test
+   |> test this too
+   <| and this
+    | and this
+   << composition as well
+    : still composing
+    : still composing
+
+*- test
+-- Sewer.map?
+
+>- ( a, b ) -> a
+-- compose a function
+
+|- ( a, b ) -> a
+-- andThen a function
+
+-- I LOVE ALL OF THIS
+
+#+ parsePoint
+   %| succeed Point
+    : symbol "("
+    : spaces
+    * identity
+    | float
+    : symbol ","
+    : spaces
+    | float
+    * identity
+    : spaces
+    : symbol ")"
+    : end
+
+
+=| test
+ | test2
+-- Sewer.andThen
+
+=* test2
+-- Sewer.map
+
+=- x -> x
+-- Sewer.map
+
+=* -| w -> w
+    | x -> x
+      -- we can make comments like this hehe
+    | y -> y
+    : z
+   -- Sewer.map
+
+-----------------
+
+metalanguage
+
+everything should be kinda like elm-tools/parser
+  make a web/api pipline!
+
+# env
+  | import
+    | additional package
+  - newFunction
+  . newType
+    | union
+> composition
+  > compose
+    | another composition
+    : continuations should act on additional (positional) arguments
+  | andThen
+  - match/compose
+< composition
+  < compose
+    | another composition
+    : continuations should act on additional (positional) arguments
+  | andThen
+| pipe/andThen/continuation
+  > apply
+  < call
+  = sewer/andThen
+  - match/andThen
+: alt-pipe/continuation
+% parser
+  | start
+    | keep
+    : skip
+    * map
+    - map/match
+  [ oneOf
+    , or
+* map
+  = Sewer.map
+  % Parser.map
+  & Result.map
+    : Result.mapError
+  ? Maybe.map
+- match
+  | case
+    | another case
+    : default?
+  < match/compose
+= sewer
+  | andThen
+    | after
+    * map
+    - map/match
+      TODO: foldp
+      TODO: filter
+  * map
+  - map/match
+    TODO: foldp
+    TODO: filter
+  [ TODO: chunk/sample?
+    | TODO
+    : TODO
+    , TODO
+  ( combine
+    , or/with
+. type
+  ! check type
+& result
+  & construct
+    : construct Error
+  * map
+    * map
+    - map/match
+    | andThen
+    : withDefault
+  | andThen
+    * map
+    - map/match
+    | andThen
+    : withDefault
+  : withDefault
+  [ oneOf
+    , or
+  ( merge
+    , and
+@ network/socket
+! test/error/check/verify/crash/debug/log
+  . type check
+  ! crash
+  - test
+  * log
+  = log
++ graphics
+~ audio
+$
+^ 
+/
+? maybe
+  ? construct Just
+  * map
+    * map
+    - map/match
+    | andThen
+    : withDefault
+  | andThen
+    * map
+    - map/match
+    | andThen
+    : withDefault
+  [ oneOf
+    , or
+  ( merge
+    , and
+\ 
+, group
+
+
+-----------------
+
+
+everything should have a pipe-right notation for subgroups
+|> one
+|> two
+|> three
+-| four  -> five
+ | six   -> seven
+ | eight -> nine
+>> one
+>> two
+>> three
+
+should be equal to
+
+>| one
+ | two
+ | three
+-| four  -> five
+ | six   -> seven
+ | eight -> nine
+>> one
+ | two
+ | three
+
+or
+
+|> one
+ | two
+ | three
+-| four  -> five
+ | six   -> seven
+ | eight -> nine
+<< one
+ | two
+ | three
+
+-----------------
+
+>> identity
+ : a -> b
+ | identity
+ : b -> c
+.! (x -> a -> z) -> (a -> y) -> x -> y -> z 
+
+-----------------
+

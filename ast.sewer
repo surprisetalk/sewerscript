@@ -1,0 +1,158 @@
+
+#@ Parser
+ | Char
+
+-- TODO: we need a way of defining new operators
+-- TODO:   i mean the left-side pipes
+-- TODO:   all the domain-specific ones should be defined in the imports rather than in the interpreter
+
+#. AST (List Block)
+#. Block
+ | Exp Expr
+ | Blc Op Block (List Block)
+
+#. Expr
+ | App (List (      Expr))
+ | Lis (List (      Expr))
+ | Tup (List (      Expr))
+ | Rec (List (Expr, Expr))
+ | Dic (List (Expr, Expr))
+ | Trm (List (      Term))
+#. Term
+ | Sym String
+ | Tag String
+ | Num Number
+ | Txt Text
+#. Number
+ | Flt Float
+ | Int Int  
+#. Text
+ | Str String
+ | Chr String
+
+#- variable
+ . Parser String
+ : Parser.variable
+   Char.isAlpha
+   -| c -> Char.isAlphaNumeric c
+        || c == '-'
+        || c == '_'
+        || c == '.'
+   [ 
+   ]
+
+#- term
+ . Parser Term
+ : %[ %| Parser.succeed Sym
+       | variable
+    , %| Parser.succeed Tag
+       : symbol '#'
+       | variable
+    , %| Parser.succeed (Flt >> Num)
+       | Parser.float
+    , %| Parser.succeed (Int >> Num)
+       | Parser.integer
+    , %| Parser.succeed (Str >> Txt)
+       : symbol '"'
+       | repeat zeroOrMore (Parser.notChar '"')
+       : symbol '"'
+    , %| Parser.succeed (Chr >> Txt)
+       : symbol '\''
+       | repeat zeroOrMore (Parser.notChar '\'')
+       : symbol '\''
+    ]
+    
+#- group
+ . String -> String -> Parser Expr -> Parser (List Expr)
+ : start -> end -> p -> 
+   Parser.sequence
+   { #start     start
+   , #end       end
+   , #separator ","
+   , #spaces    spaces
+   , #trailing  Forbidden
+   , #item      p
+   }
+    
+#- expr
+ . Parser Expr
+ : %| Parser.succeed Exp
+    | repeat (oneOrMoreSepBy spaces)
+      %[ %| Parser.succeed Trm 
+          | repeat (oneOrMoreSepBy spaces) term
+       , %| Parser.succeed App 
+          : symbol "("
+          | expr
+          : symbol ")"
+       , %| Parser.succeed Lst
+          | group "[" "]" expr
+       , %| Parser.succeed Tup
+          | group "#[" "]" expr
+       , %| Parser.succeed Dct
+          | group "{" "}"
+            %| succeed (,)
+             | expr
+             : spaces
+             | expr
+       , %| Parser.succeed Rec
+          | group "#{" "}"
+            %| succeed (,)
+             | expr
+             : spaces
+             | expr
+       ]
+
+#- op
+ . Parser Op
+ : %[ symbol "   " %* always Indent
+    , symbol " | " %* always Pipe
+    , symbol " : " %* always Pipelet
+    , symbol " * " %* always PipeMap
+    , symbol " . " %* always PipeType
+    , symbol " , " %* always Push
+    , symbol "%| " %* always Parser
+      -- move this one to the Parser package
+    ]
+
+#- lexer
+ . Parser Token
+ : %[ op
+    , %| expr
+       : spaces
+    , newline %* always Newline
+    , eof %* always Newline
+    ]
+
+#- unstack
+ . BlockStack -> BlockStack
+ : -| ( bloc :+ blocs ) :+ stac -> bloc :+ ( blocs :+ stac )
+
+#- stack
+ . Block -> BlockStack -> BlockStack
+ : -| bloc -> blocs :+ stac -> ( bloc :+ blocs ) :+ stac 
+
+#- collapse
+ . BlockStack -> BlockStack
+ : -| bloc :+ stac -> stack block stac
+    |         stac ->             stac
+    
+#- parser
+ . Token -> BlockStack -> BlockStack
+ : -| Indent   -> unstack
+    | Pipe     -> unstack >> stack Pipe
+    | Pipelet  -> unstack >> stack Pipelet
+    | PipeType -> unstack >> stack PipeType
+    | PipeMap  -> unstack >> stack PipeMap
+    | Push     -> unstack >> stack Push
+    | Newline  -> collapse
+    | t        -> stack bs
+    
+=. Char
+ | Parser.lex lexer
+ . Parser Context Problem Token
+ | Parser.parse [ [ Idy ] ] parser
+ . Parser Context Problem BlockStack
+ * blockStackToAST
+-. Sewer (Parser Context Problem AST)
+
+-- separating the lexer was a good idea because we can pipe the tokens into an ast or an evaluator
