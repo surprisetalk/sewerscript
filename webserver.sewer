@@ -1,51 +1,17 @@
 
-#@ WebServer
- | Mysql <- https://sewerscript.org/Mysql.sewer
-
--- okay, so there's a few things
---   states    : models that are folded over time
---   requests  : queue that must be managed! we don't want requests getting lost
---             : the reason we need this is because many systems need to go do other things for a little bit while the requests are waiting in the queue
---   responses : we need an safe, immutable way of moving requests into responses
-
--- should our piping dsl be from the perspective of the webserver, or a single request?
---   if it's for single requests, then it takes care of a lot of problems!
---     every request effectively begins its own parallel journey down its own pipe
---   try to do as much as possible without global server state
-
--- SERVER : Model -> ( Model -> Msg id -> Model ) -> ( Model, Response (Msg id) )
---        : in this, each request has its own state for the duration of its lifetime
---        : this is so there's something to remember when mysql responds, or whatever
-
--- okay, so part of the problem is async services like mysql, so how about we make a promise-like api around them?
-
--- I'm a little suspicious about the direction this is headed.
---   Sit down with some paper and make a theory about web-services
---     take inspiration from elm-tools/parser
--- We should encapsulate, but not TOO much
-
--- the webserver object, by default, subscribes to no ports, and responds with 404s to every request
--- it needs a few major things:
---   # : foldp   : a -> ( a -> Msg -> a ) -> WebServer a
---   * : map     : a -> b
---   : : publish : ?
-
--- i don't like any of this either
-
--- Webservers are ( WebServer Msg -> WebServer (Response Msg) ), i think
-
--- at this point, the incoming sewer is a generic collection of sewers (including msgs)
---   this is so that you can make your own WebServer implementation, if you really wanted to
-=| WebServer.subscribe network [ myMysql ]
--- now the generic sewers are encapsulated into an object that's easier to work with
--. Sewer (WebServer Msg)
-@| identity
-
-----------------------------------------------------------
-
-=. WebServer Msg
- | WebServer.subscribe
-   .- WebServer msg -> List (Pub (WebServer.Response msg))
-   <| Mysql.msyql mysqlAuth MyQuery MyResult
- | WebServer.passport authenticate
- | WebServer.route    router
+=. WebServer
+ | Sewer.latest
+   <| File.watch @./index.html
+      -. Sewer File
+   <| Socket.listen @*:80
+      -. Sewer (Socket Byte)
+      =| Http.Request.fromBytes
+      -. Sewer (Socket Http)
+ . ( File, Socket Http.Request )
+ | @. ( File, Http.Request ) -> Http.Response
+      ( File index, Request { #endpoint @/ } ) -> index
+      @| MyDB.getRandomUserInfo
+       * Html.Template.render index
+       : Http.Error.ServerError
+    : Http.Error.NotFound
+ . Http.Response Html
