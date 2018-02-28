@@ -10,7 +10,7 @@
 
 =. WebServer.Sub @*/index.html @*/index.html
  | WebServer.serve File.Error.NotFound
-   -. WebServer.Sub @*/index.html @*/index.html -> Path -> Path
+   -. WebServer.Sub @*/index.html @*/index.html -> File -> File
     | File Subscribed (_ / @index.html) file -> _ -> file
     | _ -> file -> file
    -| index -> Request (_ / @index.html) { body = body } ->
@@ -18,7 +18,7 @@
        * authenticate
        * transformRequest
        | MySql.query creds "SELECT (2 + 2)"
-       * toJSON
+       * fillTemplate index
     : @: error404
  . List (WebServer.Pub Path.none network)
 
