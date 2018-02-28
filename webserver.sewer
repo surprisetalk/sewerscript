@@ -1,17 +1,23 @@
 
-=. WebServer
- | Sewer.latest
-   <| File.watch @./index.html
-      -. Sewer File
-   <| Socket.listen @*:80
-      -. Sewer (Socket Byte)
-      =| Http.Request.fromBytes
-      -. Sewer (Socket Http)
- . ( File, Socket Http.Request )
- | @. ( File, Http.Request ) -> Http.Response
-      ( File index, Request { #endpoint @/ } ) -> index
-      @| MyDB.getRandomUserInfo
-       * Html.Template.render index
-       : Http.Error.ServerError
-    : Http.Error.NotFound
- . Http.Response Html
+-- sewer --storage=. --socket=*:80 webserver.sewer
+
+=. ( WebServer.Sub, WebServer.Env )
+ # #- init
+    : File.Error.NotFound
+   #- update
+    . WebServer -> Path -> Path
+    | File Subscribed @index.html file -> _ -> file
+    | _ -> file -> file
+ | WebServer.serve init update
+   -- serve : a -> (WebServer.Sub -> a -> a) -> (a -> WebServer.Sub -> Async WebServer.Sub WebServer.Pub) -> Sewer (WebServer.Sub -> WebServer.Pub)
+   -| index -> Socket @*:80 { endpoint = @/, body = body } ->
+      @: body
+       * authenticate
+       * transformRequest
+       | MySql.query creds "SELECT (2 + 2)"
+       * respond
+    : @: error404
+
+
+
+
