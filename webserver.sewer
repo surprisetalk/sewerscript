@@ -1,23 +1,26 @@
 
 -- sewer --storage=. --socket=*:80 webserver.sewer
 
-=. WebServer.Sub
- # #- init
-    : File.Error.NotFound
-   #- update
-    . WebServer -> Path -> Path
-    | File Subscribed @index.html file -> _ -> file
+-- WebServer.Sub Storage Network 
+-- WebServer.Pub Storage Network
+--   we need subtypes to "range" over what we have access to
+--     this gives us a lot more safety in terms of readable/writable sewage
+
+-- serve : a -> (WebServer.Sub s n -> a -> a) -> (a -> WebServer.Sub.Request -> Async (WebServer.Sub s n) (List WebServer.Pub) WebServer.Pub.Response) -> Sewer WebServer.Sub -> Sewer (List WebServer.Pub)
+
+=. WebServer.Sub @*/index.html @*/index.html
+ | WebServer.serve File.Error.NotFound
+   -. WebServer.Sub @*/index.html @*/index.html -> Path -> Path
+    | File Subscribed (_ / @index.html) file -> _ -> file
     | _ -> file -> file
- | WebServer.serve init update
-   -- serve : a -> (WebServer.Sub -> a -> a) -> (a -> WebServer.Sub.Request -> Async WebServer.Sub (List WebServer.Pub) WebServer.Pub.Response) -> Sewer WebServer.Sub -> Sewer (List WebServer.Pub)
-   -| index -> Request @*:80 { endpoint = @/, body = body } ->
+   -| index -> Request (_ / @index.html) { body = body } ->
       @: body
        * authenticate
        * transformRequest
        | MySql.query creds "SELECT (2 + 2)"
        * toJSON
     : @: error404
- . List WebServer.Pub
+ . List (WebServer.Pub Path.none network)
 
 
 
