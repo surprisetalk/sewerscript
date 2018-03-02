@@ -1,3 +1,28 @@
+http://dev.stephendiehl.com/fun/002_parsers.html
+https://en.wikibooks.org/wiki/Write_Yourself_a_Scheme_in_48_Hours/Parsing
+https://github.com/JakeWheat/intro_to_parsing
+https://hackage.haskell.org/package/megaparsec
+https://hackage.haskell.org/package/megaparsec-6.4.0/docs/Text-Megaparsec.html
+https://hackage.haskell.org/package/megaparsec-6.4.0/docs/Text-Megaparsec-Char.html#v:spaceChar
+https://hackage.haskell.org/package/megaparsec-6.4.0/docs/Text-Megaparsec-Char-Lexer.html#v:signed
+https://hackage.haskell.org/package/parser-combinators-0.4.0/docs/Control-Monad-Combinators.html#v:skipSome
+https://markkarpov.com/megaparsec/parsing-simple-imperative-language.html
+https://markkarpov.com/megaparsec/custom-error-messages.html
+https://stackoverflow.com/questions/20660782/writing-a-parser-from-scratch-in-haskell
+http://akashagrawal.me/beginners-guide-to-megaparsec/
+https://en.wikibooks.org/wiki/Write_Yourself_a_Scheme_in_48_Hours/Parsing
+https://jakewheat.github.io/intro_to_parsing/#_parens
+https://en.wikibooks.org/wiki/Write_Yourself_a_Scheme_in_48_Hours
+https://jakewheat.github.io/intro_to_parsing/#_eof
+http://www.randomhacks.net/2007/03/10/haskell-8-ways-to-report-errors/
+https://github.com/elm-lang/elm-compiler/commits/master?after=d924db7e6521e061a0a7181d370c252fd574438c+140
+https://github.com/elm-lang/elm-compiler/blob/master/src/Compile.hs
+http://package.elm-lang.org/packages/elm-lang/core/3.0.0/Signal
+https://en.wikipedia.org/wiki/Port_(computer_networking)
+http://package.elm-lang.org/packages/elm-lang/core/latest/Time
+
+
+
 https://www.youtube.com/watch?v=6a5Ti0r8Q2s
 
 |> Sewer.map
