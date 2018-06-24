@@ -1,0 +1,55 @@
+
+f g h            --composition
+{ x:f y }        --mapping
+{ x y }->[ x y ] --restructuring
+0.(f g h)        --folding
+
+
+_->[1 2 3] 0.+
+-- this function always returns 6
+
+_->[1 2 3]
+([|n l|]->[n ...l]).[]
+[x y z]->[|x y z|]
+[|_->100 _ _|]
+-- this function always returns [|100 1 2|]
+
+
+--------------------------
+
+
+The language is just a fold over an [|[|env state|] term|].
+
+|* composition   *|  f g h
+|* mapping       *|     f
+|* mapping       *|     { : x ( f g ) }
+|* mapping       *|     [ f _ g ]
+|* mapping       *|  |- [ f ]
+                     |- [ f _ g ... ]
+                     | 
+|* restructuring *|  |> [ x ... ] x
+|* restructuring *|  |> [ x ... ] x
+|* folding       *|  <> [] f
+|* folding       *|  <> 0  f
+
+|* folding       *|  |* [] f
+|* folding       *|  |* 0  f
+
+TODO: Cases for mapping and restructuring.
+
+BUG: I don't like a lot of this.
+
+TODO: The meta-functions are all macros, which are functions that operate on the env, state, and term.
+TODO:  Normal functions just operate on terms.
+
+TODO: For v1, don't worry about syntax/symbols. Just use words.
+
+
+define g ( + dup == )
+f g h
+f
+g
+h
+fold [] f
+[ f ]
+restructure [ x ] x
