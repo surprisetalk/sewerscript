@@ -40,16 +40,17 @@ TODO: Cases for mapping and restructuring.
 BUG: I don't like a lot of this.
 
 TODO: The meta-functions are all macros, which are functions that operate on the env, state, and term.
-TODO:  Normal functions just operate on terms.
+TODO:  Normal functions are just lists or whatever.
 
 TODO: For v1, don't worry about syntax/symbols. Just use words.
 
 
 define g ( + dup == )
+typecheck boolean
 f g h
 f
 g
 h
 fold [] f
-[ f ]
+[ h ]
 restructure [ x ] x
