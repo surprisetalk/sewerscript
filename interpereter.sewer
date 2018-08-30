@@ -22,18 +22,24 @@ The language is just a fold over an [|[|env state|] term|].
 
 |* composition   *|  f g h
 |* mapping       *|     f
-|* mapping       *|     { : x ( f g ) }
+|* mapping       *|     { :x ( f g ) }
 |* mapping       *|     [ f _ g ]
 |* mapping       *|  |- [ f ]
-                     |- [ f _ g ... ]
-                     | 
-|* restructuring *|  |> [ x ... ] x
-|* restructuring *|  |> [ x ... ] x
-|* folding       *|  <> [] f
-|* folding       *|  <> 0  f
+|* mapping       *|  |- [ f _ g ... ]
+                     
+|* typecheck     *|  |= [ int ]
+|* typecheck     *|  |= { symbol int }
+|* typecheck     *|  |= {| :aa int :bb int |}
+|* typecheck     *|  |= [| int int int int |]
 
-|* folding       *|  |* [] f
-|* folding       *|  |* 0  f
+|* restructuring *|  |> { [ x ... ] x }
+|* restructuring *|  |> { [ x ... ] x }
+
+|* folding lists *|  :* [| [] f |]
+|* folding lists *|  :* [| 0  f |]
+
+|* mapping lists *|  :-   f
+|* mapping lists *|  :- [ f ... ]
 
 
 NO APPLICATION.
