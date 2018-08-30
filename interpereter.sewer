@@ -35,12 +35,60 @@ The language is just a fold over an [|[|env state|] term|].
 |* folding       *|  |* [] f
 |* folding       *|  |* 0  f
 
+
+NO APPLICATION.
+Seriously, if you want to add two numbers, throw them in a tuple and map over them.
+
+    |= [ int ]
+    |> { [ x y ... ] [| x y |]
+       }
+    |- +
+    |> { x [| x 4 |]
+       }
+    |= [| int |]
+    -- This is a comment
+    -- Another comment
+    -- Comment testing one two three
+    |- *
+    |> { x [ x x x ]
+       }
+    |= [ int ]
+    :* [| 0 + |]
+    |= int
+
+
+    |> { _ :[ ( 1 + 2 ) * 3 / 4 ]
+       }
+    |= [ symbol ]
+    |- calculate
+    |= real
+
+    |> { _ :[ abc def ghi ]
+       }
+    |= [ symbol ]
+    :* [| [] ( [| symbol->string _ |] append ) |]
+    |= string
+    -- Should be "abcde"
+
+    |> { _ :[ abc def ghi ]
+       }
+    |= [ symbol ]
+    :- ( [| symbol->string _ |] append )
+    -- map over a list?
+    |= string
+    -- Should be "abcde"
+
+    |> { _ :x }
+    |= Symbol
+
+
 TODO: Cases for mapping and restructuring.
 
 BUG: I don't like a lot of this.
 
 TODO: The meta-functions are all macros, which are functions that operate on the env, state, and term.
 TODO:  Normal functions are just lists or whatever.
+TODO:    Actually, every term is a function that operates on env/state. Because `(f define g (+ +) h)` must itself be a function.
 
 TODO: For v1, don't worry about syntax/symbols. Just use words.
 
@@ -54,3 +102,25 @@ h
 fold [] f
 [ h ]
 restructure [ x ] x
+
+
+
+
+-----------------------------------------
+
+|> {  {| :request
+         {| :id     id
+            :path   "/echo"
+            :method "POST"
+            :body   body
+         |}
+      |}
+
+      {| :response
+         {| :id     id
+            :body   body
+         |}
+      |}
+   }
+        
+-- echo server
