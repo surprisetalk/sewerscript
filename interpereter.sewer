@@ -22,6 +22,10 @@ The language is just a fold over an [|[|env state|] term|].
 |* typecheck     *|  ?#middle
 |* typecheck     *|  ?dir
 
+|* quoting       *|  #x
+|* quoting       *|  #[ x ]
+|* quoting       *|  #=[ x ]
+
 |* restructuring *|  %{   [ x .. ] x
                       }
 |* restructuring *|  %{ =:[ #left   x   ] x
