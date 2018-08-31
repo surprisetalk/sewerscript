@@ -182,20 +182,79 @@ restructure [ x ] x
 
 -----------------------------------------
 
-|> {  {| :request
-         {| :id     id
-            :path   "/echo"
-            :method "POST"
-            :body   body
-         |}
-      |}
+?server-in
+%{ =:[ #requested
+       ={ #id     id
+          #path   /echo
+          #method :#POST
+          #body   body
+        }
+     ]
+   [ =:[ #respond
+         ={ #id     id
+            #status 200
+            #body   body
+          }
+       ]
+   ]
 
-      {| :response
-         {| :id     id
-            :body   body
-         |}
-      |}
-   }
+   =:[ #requested
+       ={ #id     id
+          #path   /user
+          #method :#GET
+        }
+     ]
+   [ =:[ #fetch
+        ={ #name   #user
+           #uri    @https://localhost:5432
+           #method :#POST
+           #body   "SELECT * FROM USERS ORDER BY RANDOM LIMIT 1"
+           -- TODO: callback-ish thing or request data
+         }
+      ]
+   ]
+
+   =:[ #fetched
+       =[ #user
+          =:[ #response
+              ={ #id id
+               }
+            ]
+          =:[ #error
+              error
+            ]
+        ]
+     ]
+   [ =:[ #respond
+         ={ #id     id
+            #status 500
+            #body   error
+          }
+       ]
+
+   ]
+
+   =:[ #fetched
+       =[ #user
+          =:[ #response
+              ={ #id id
+               }
+            ]
+          =:[ #ok
+              user
+            ]
+        ]
+     ]
+   [ =:[ #respond
+         ={ #id     id
+            #status 200
+            #body   user
+          }
+       ]
+
+   ]
+ }
+?server-out
         
 -- echo server
 
