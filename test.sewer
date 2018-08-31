@@ -1,0 +1,16 @@
+    |=  [ int ]
+    |>  { [ x y ... ] =[ x y ]
+        }
+    |-  +
+    |>  { x =[ x 4 ]
+        }
+    |= =[ int ]
+    --  This is a comment
+    --  Another comment
+    --  Comment testing one two three
+    |-  *
+    |>  { x [ x x x ]
+        }
+    |=  [ int ]
+    :* =[ 0 + ]
+    |=  int

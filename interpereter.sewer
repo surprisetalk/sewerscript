@@ -1,91 +1,155 @@
-
-f g h            --composition
-{ x:f y }        --mapping
-{ x y }->[ x y ] --restructuring
-0.(f g h)        --folding
-
-
-_->[1 2 3] 0.+
--- this function always returns 6
-
-_->[1 2 3]
-([|n l|]->[n ...l]).[]
-[x y z]->[|x y z|]
-[|_->100 _ _|]
--- this function always returns [|100 1 2|]
-
-
---------------------------
-
-
 The language is just a fold over an [|[|env state|] term|].
 
 |* composition   *|  f g h
+
 |* mapping       *|     f
-|* mapping       *|     { :x ( f g ) }
-|* mapping       *|     [ f _ g ]
-|* mapping       *|  |- [ f ]
-|* mapping       *|  |- [ f _ g ... ]
+|* mapping       *|  { #x ( f g )  }
+|* mapping       *|  {  f ( f g )  }
+|* mapping       *|  [  f   _ g    ]
+|* mapping       *|  [  f          ] 
+|* mapping       *|  [  f   _ g .. ]
+                     -- only the last one should map lists of variable length
                      
-|* typecheck     *|  |= [ int ]
-|* typecheck     *|  |= { symbol int }
-|* typecheck     *|  |= {| :aa int :bb int |}
-|* typecheck     *|  |= [| int int int int |]
+|* mapping each  *|  [ ..f ]
+|* mapping each  *|  { ..=[kf vf] }
 
-|* restructuring *|  |> { [ x ... ] x }
-|* restructuring *|  |> { [ x ... ] x }
+|* typecheck     *|  ?int
+|* typecheck     *|  ?[ int ]
+|* typecheck     *|  ?{ symbol int }
+|* typecheck     *|  ?={ #aa int #bb int }
+|* typecheck     *|  ?=[ int int int int ]
+|* typecheck     *|  ?=:[ #right int 2 ]
+|* typecheck     *|  ?#middle
+|* typecheck     *|  ?dir
 
-|* folding lists *|  :* [| [] f |]
-|* folding lists *|  :* [| 0  f |]
+|* restructuring *|  %{   [ x .. ] x
+                      }
+|* restructuring *|  %{ =:[ #left   x   ] x
+                        =:[ #right  _ n ] n
+                        =:[ #middle     ] 0
+                      }
+|* restructuring *|  %{ ={ #a 0 ..   } =[ 0 0 ]
+                        ={ #a 1 #b _ } =[ 0 0 ]
+                        ={ #a x #b y } =[ x y ]
+                      }
 
-|* mapping lists *|  :-   f
-|* mapping lists *|  :- [ f ... ]
+|* define        *|  ![ #x 34 ]
+|* define        *|  ![ :t =[ [x] =:{ #left [x] #middle [] #right [x :int] } ] ]
+
+|* define        *|  !#[ x 34 ]
+|* define        *|  !:[ t    [x] =:{ #left [x] #middle [] #right [x :int] }   ]
 
 
 NO APPLICATION.
 Seriously, if you want to add two numbers, throw them in a tuple and map over them.
 
-    |= [ int ]
-    |> { [ x y ... ] [| x y |]
-       }
-    |- +
-    |> { x [| x 4 |]
-       }
-    |= [| int |]
+    %[ x ={ #left x } ]
+    -- this creates a record
+    -- in Elm, this would be (\x -> { left = x })
+
+    %[ x =[ #left x ] ]
+    -- this creates a tuple
+    -- in Elm, this would be (\x -> ( Left, x ))
+
+    %[ x =:[ #right x 2 ] ]
+    -- this creates a union typelet
+    -- in Elm, this would be (Right x 2)
+
+    %[ _ :#middle ]
+    -- this also creates a union typelet
+    -- in Elm, this would be (Middle)
+
+    %[ _ =:[ #middle ] ]
+    -- this also creates a union typelet
+    -- in Elm, this would be (Middle)
+
+    ![ :dir =[ [x] =:{ #left [x] #middle [] #right [x :int] } ] ]
+    -- this creates a union type
+    -- in Elm, this would be (type Dir x = Left x | Middle | Right x Int)
+
+    -------------------
+
+    copy =[ _ f ]
+
+    -- make a copy and apply f to the copy
+
+    -------------------
+
+    =[ _ =[ + 0 [1 2 3] ] ]
+    foldl
+    ?int
+
+    -------------------
+
+    ?[ int ]
+    %{ [ x y .. ] =[ x y ]
+     }
+     +
+    %{ x =[ x 4 ]
+     }
+    ?[ int ]
     -- This is a comment
     -- Another comment
     -- Comment testing one two three
-    |- *
-    |> { x [ x x x ]
-       }
-    |= [ int ]
-    :* [| 0 + |]
-    |= int
+     *
+    %{ x [ x x x ]
+     }
+    ?[ int ]
+    ![ #sum ( %{ ints =[ + 0 ints ] } foldl ) ]
+    sum
+    ?int
 
+    -------------------
 
-    |> { _ :[ ( 1 + 2 ) * 3 / 4 ]
-       }
-    |= [ symbol ]
-    |- calculate
-    |= real
+    !#[ fib
+        ( ?int
+          !#[ first  %{ =[ n _ ] n } ]
+          !#[ second %{ =[ _ n ] n } ]
+          %{ n =[ 0 n ] } range
+          !#[ f (second dup =[ second + ] ) ]
+          %{ ns =[ f =[0 1] ns ] } foldl first
+        )
+      ]
 
-    |> { _ :[ abc def ghi ]
-       }
-    |= [ symbol ]
-    :* [| [] ( [| symbol->string _ |] append ) |]
-    |= string
+    !#[ fib
+        ( %{ n =[ (dup =[ tuple-second + ]) =[0 1] n ] }
+          ntimes
+          tuple-first
+        )
+      ]
+
+    -------------------
+
+    %{ _ #[ ( 1 + 2 ) * 3 / 4 ] }
+    ?[ symbol ]
+    calculate
+    ?real
+
+    -------------------
+
+    %{ _ #[ abc def ghi ] }
+    ?[ symbol ]
+     [ ..symbol->string ]
+     concat
+    ?string
     -- Should be "abcde"
 
-    |> { _ :[ abc def ghi ]
-       }
-    |= [ symbol ]
-    :- ( [| symbol->string _ |] append )
-    -- map over a list?
-    |= string
-    -- Should be "abcde"
+    -------------------
 
-    |> { _ :x }
-    |= Symbol
+    %{ _ :x }
+    ?symbol
+
+    -------------------
+
+    -- += [| myUnion
+    --       [   :a
+    --         { :b int }
+    --           :c
+    --       ]
+    --    |]
+    -- -- everything might work better if we have a "type" character
+    -- -- : is "symbol", so __ could be "type"
+    -- -- we can just match on all the options in the list
 
 
 TODO: Cases for mapping and restructuring.
@@ -130,3 +194,65 @@ restructure [ x ] x
    }
         
 -- echo server
+
+
+-----------------------------------------
+
+[ f ]
+
+-- Each term takes a :compilation-state (:==[ env state ]) and produces a :compilation-state
+--   Because each operator is a compilation-time macro, it should be easy to define new operators, and even change the language quite drastically.
+
+
+-----------------------------------------
+
+-- -- BUG: This section is wrong! We don't want to pass terms through terms.
+-- 
+-- [ f
+-- 
+-- -- This should technicially be a valid program!
+-- --   It takes :==[ env state ] and produces :==[ env state ].
+-- 
+-- -- The first function ("[" in this case) gets the lastState wrapped in a reading struct, e.g. =[ #reading "]" lastState ].
+-- --   It is responsible for parsing words as they come in, and setting up the state for the next function in line.
+-- 
+-- macro
+-- =[ "["
+--     ( |> { =[ env =[ #error error ] ]
+--            =[ env =[ #error error ] ]
+-- 
+--            =[ env =[ #reading "]" =[ #closing state ] ] ]
+--            =[ env state ]
+-- 
+--            =[ env =[ #reading "]" _ ] ]
+--            =[ env =[ #error `Parse error: ]` ] ]
+-- 
+--            =[ env =[ #reading ")" _ ] ]
+--            =[ env =[ #error `Parse error: )` ] ]
+-- 
+--            =[ env =[ #reading "}" _ ] ]
+--            =[ env =[ #error `Parse error: }` ] ]
+-- 
+--            =[ env =[ #reading str =[ #composing fs ] ] ]
+--            -- TODO
+--          }
+--     )
+--  ]
+--  -- TODO: If there's no "["-specific stuff to do, pass the state into a generic function that looks for unexpected tokens, etc.
+--       
+-- macro
+-- =[ "]"
+--     ( |> { =[ env =[ #error error ] ]
+--            =[ env =[ #error error ] ]
+-- 
+--            =[ env =[ #reading _ _ ] ]
+--            =[ env =[ #error `Unexpected token: ]` ] ]
+-- 
+--            =[ env =[ #composing fs ] ]
+--            =[ env 
+--          }
+--     )
+--  ]
+--  -- TODO: If there's no "["-specific stuff to do, pass the state into a generic function that looks for unexpected tokens, etc.
+-- 
+-- 
