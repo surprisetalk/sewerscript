@@ -1,0 +1,66 @@
+-- TODO: rename "server-*" to "webserver-*"
+
+-- SERVER IN -------------------------------------------------------------------
+
+!:[ server-model []
+    -- TODO: We need to hold information about open connections/sockets here.
+  ]
+
+!:[ server-msg []
+    =:{ -- other subscription events like file-changed, etc.
+        --   the parent process determines what things we watch/listen to
+      }
+  ]
+
+!:[ server-in []
+    =[ :server-model
+       :server-msg
+     ]
+  ]
+
+
+-- REQUEST LANE IN -------------------------------------------------------------
+
+!:[ request
+  ]
+
+!:[ request-lane-in []
+    =:{ new-http-request [:request]
+        -- other subscription events like file-changed, etc.
+        --   the parent process determines what things we watch/listen to
+      }
+  ]
+
+?server-in
+
+
+
+?request-lane-in
+
+
+-- REQUEST LANE OUT ------------------------------------------------------------
+
+!:[ response
+    -- TODO
+  ]
+
+!:[ request-lane-out []
+    =:{ respond   [:response     ]
+        file-read [:request :text]
+        
+      }
+  ]
+
+?request-lane-out
+
+
+-- SERVER OUT ------------------------------------------------------------------
+
+!:[ server-cmd []
+    =:{ http-fetch [:]
+      }
+  ]
+
+!:[ server-out [] =[ :server-model [ :server-cmd ] ] ]
+
+?server-out

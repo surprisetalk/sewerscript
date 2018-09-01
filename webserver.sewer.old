@@ -1,51 +1,43 @@
 
-#@ WebServer
- | Mysql <- https://sewerscript.org/Mysql.sewer
+-- sewer --storage=. --socket=*:80 webserver.sewer
 
--- okay, so there's a few things
---   states    : models that are folded over time
---   requests  : queue that must be managed! we don't want requests getting lost
---             : the reason we need this is because many systems need to go do other things for a little bit while the requests are waiting in the queue
---   responses : we need an safe, immutable way of moving requests into responses
+-- WebServer.Response Storage Network 
+-- WebServer.Request  Storage Network
+--   we need subtypes to "range" over what we have access to
+--     this gives us a lot more safety in terms of readable/writable sewage
 
--- should our piping dsl be from the perspective of the webserver, or a single request?
---   if it's for single requests, then it takes care of a lot of problems!
---     every request effectively begins its own parallel journey down its own pipe
---   try to do as much as possible without global server state
+-- serve : a -> (WebServer.Response s n -> a -> a) -> (a -> WebServer.Response.Request -> Async (WebServer.Response s n) (List WebServer.Request) WebServer.Request.Response) -> WebServer.Response -> List WebServer.Request
 
--- SERVER : Model -> ( Model -> Msg id -> Model ) -> ( Model, Response (Msg id) )
---        : in this, each request has its own state for the duration of its lifetime
---        : this is so there's something to remember when mysql responds, or whatever
+-- consider ditching the special syntaxes in favor a unified Fold or Applicative set of operators
 
--- okay, so part of the problem is async services like mysql, so how about we make a promise-like api around them?
+-- i love these request and response types!
+--   exampleWebServer : Request () /* @ws://*:(80|3306) a -> [ Response () /* @ws://*:(80|3306) a ]
+--   when we go deeper : Request i _/ @*:3306 (Rows a) -> Response i _/ @*:3306 (Query a)
 
--- I'm a little suspicious about the direction this is headed.
---   Sit down with some paper and make a theory about web-services
---     take inspiration from elm-tools/parser
--- We should encapsulate, but not TOO much
+#. Request addr path socket packet
+ | Write addr  path   String
+ | Send  addr  socket packet
+ | Say   addr (Result String String)
 
--- the webserver object, by default, subscribes to no ports, and responds with 404s to every request
--- it needs a few major things:
---   # : foldp   : a -> ( a -> Msg -> a ) -> WebServer a
---   * : map     : a -> b
---   : : publish : ?
+#. Response addr path socket packet
+ | Read    addr path   (Result    FileError String)
+ | Receive addr socket (Result NetworkError packet)
+ | Hear    addr        (Result       String String)
 
--- i don't like any of this either
+=. WebServer.Response @*/index.html @*:(80|3306)
+ * WebServer.serve File.Error.NotFound
+   -. WebServer.Response @*/index.html @*/index.html -> File -> File
+    | File Subscribed (_ / @index.html) file -> _ -> file
+    | _ -> file -> file
+   -| index -> Request (_ / @index.html) { body = body } ->
+      @: body
+       * authenticate
+       * transformRequest
+       | MySql.query creds "SELECT (2 + 2)"
+       * fillTemplate index
+    : @: error404
+ . List (WebServer.Request Path.none @*:(80|3306))
 
--- Webservers are ( WebServer Msg -> WebServer (Response Msg) ), i think
 
--- at this point, the incoming sewer is a generic collection of sewers (including msgs)
---   this is so that you can make your own WebServer implementation, if you really wanted to
-=| WebServer.subscribe network [ myMysql ]
--- now the generic sewers are encapsulated into an object that's easier to work with
--. Sewer (WebServer Msg)
-@| identity
 
-----------------------------------------------------------
 
-=. WebServer Msg
- | WebServer.subscribe
-   .- WebServer msg -> List (Pub (WebServer.Response msg))
-   <| Mysql.msyql mysqlAuth MyQuery MyResult
- | WebServer.passport authenticate
- | WebServer.route    router
