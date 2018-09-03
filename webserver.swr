@@ -22,6 +22,7 @@
 -- REQUEST LANE IN -------------------------------------------------------------
 
 !:[ request
+    -- TODO
   ]
 
 !:[ request-lane-in []
@@ -29,6 +30,16 @@
         -- other subscription events like file-changed, etc.
         --   the parent process determines what things we watch/listen to
       }
+  ]
+  -- TODO: We'll probably end with something like :=[ :model :request :webserver-lane-msg ]
+
+!#[ echo-server
+    ( ?request-lane-in
+      %{ =:[ #new-http-request ={ #body body .. } ]
+         =:[ #respond ={ #status 200 #body body } ]
+       }
+      ?request-lane-out
+    )
   ]
 
 ?server-in

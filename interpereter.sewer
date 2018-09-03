@@ -18,8 +18,6 @@ The language is just a fold over an [|[|env state|] term|].
 |* typecheck     *|  ?{ symbol int }
 |* typecheck     *|  ?={ #aa int #bb int }
 |* typecheck     *|  ?=[ int int int int ]
-|* typecheck     *|  ?=:[ #right int 2 ]
-|* typecheck     *|  ?#middle
 |* typecheck     *|  ?dir
 
 |* quoting       *|  #x
@@ -28,13 +26,31 @@ The language is just a fold over an [|[|env state|] term|].
 
 |* restructuring *|  %{   [ x .. ] x
                       }
-|* restructuring *|  %{ =:[ #left   x   ] x
-                        =:[ #right  _ n ] n
-                        =:[ #middle     ] 0
+|* restructuring *|  %{ .=[ #left   x   ] x
+                        .=[ #right  _ n ] n
+                        .=[ #middle     ] 0
                       }
 |* restructuring *|  %{ ={ #a 0 ..   } =[ 0 0 ]
                         ={ #a 1 #b _ } =[ 0 0 ]
                         ={ #a x #b y } =[ x y ]
+                      }
+|* restructuring *|  %{ "hello `name`" "goodbye `name`"
+                        _              "goodbye world"
+                      }
+
+|* conditionals  *|  ~{ "plus"        + 
+                        "times"       *
+                        /id(entity)?/ ()
+                        _             ()
+                      }
+|* conditionals  *|  ~{     <=-10 #true
+                        <>-10..10 #maybe
+                             >=10 #false
+                      }
+|* conditionals  *|  ~{ [     ] .=[ #just 1  ]
+                        [ _   ] .=[ #just 2  ]
+                        [ _ _ ] .=[ #just 3  ]
+                          _     .=[ #nothing ]
                       }
 
 |* define        *|  ![ #x 34 ]
@@ -42,6 +58,129 @@ The language is just a fold over an [|[|env state|] term|].
 
 |* define        *|  !#[ x 34 ]
 |* define        *|  !:[ t    [x] =:{ #left [x] #middle [] #right [x :int] }   ]
+
+NUMBERS                  
+int           -1
+float         -2.0
+rational      -3/1
+complex       -4+0i
+complex       -4-0i
+currency      -$5.00
+currency      -¥5.00
+infinity      ._inf
+infinity      .+inf
+infinity      .+inf
+infinity      .+inf.0
+infinity      .+inf/1
+infinity      .+inf+0i
+infinity      .+0+infi
+infinity      .$+inf
+infinity      .0xinf
+infinity      .inf|16
+infinity      .inf|08
+infinity      .inf|02
+undefined     .undef
+undefined     .undef.0
+undefined     .undef/1
+hexadecimal   -0xc0ffee
+hexadecimal   -c0ffee|16
+octal         -c0ffee|08
+binary        -001101|02
+
+RANGES
+range int     <>-1..-0
+range int     <>-1......-0
+range float   <>-1.0..-0.0
+range int     <=-1
+range int     >=-1
+range int      <-1
+range int      >-1
+range char    <>'a'..'f'
+range time    <>0000h..1200h
+range date    >=04jul1776
+
+TEXT
+string        "hello dave"
+string        "hello `name`"
+string        "hello \`dave\`"
+char          'F'
+regex         /ab.?d/
+location uri  @https://google.com?q=search
+location uri  @https://google.com?q=`what`
+location path @/home/taylor/.ssh
+location path @/home/`user`/.ssh
+location path @~/.ssh
+
+TIME/DATES
+time         0420h
+time         0420h|PST
+date         4:20PM
+date         4:20PM|+08
+date         00:00:01
+date         25nov2012
+datetime     25nov2012@0420h
+datetime     25nov2012@04:20AM|PMT
+
+SYMBOLS/TAGS
+symbol      #hello
+symbol      #[1 2 3]
+
+BOOLS
+bool        .=[ #true ]
+bool        .true
+bool        .false
+
+TYPES
+type        :int
+type        :float
+type        :rational
+type        =:[ #currency :int     ]
+type        =:[ #complex  :float   ]
+type        =:[ #range    :time    ]
+type        :bool
+type        :string
+type        :char
+type        :regex
+type        :uri
+type        :path
+type        :time
+type        :date
+type        :datetime
+type        :symbol
+type        :[          :int ]
+type        :{  :symbol :int }
+type        :-[         :int ]
+type        :-{ :symbol :int }
+type        :=[ :symbol :int ]
+type        :={ #a      :int }
+type        :%{ :symbol :int }
+type        =:{ #a [] #b [] }
+
+TYPELETS
+typelet     .true
+typelet     .=[ #range .=[ #time .gmt ] ]
+
+STRUCTURES
+lst int      [    0 ]
+lst int     -[    0 ]
+tpl int     =[    0 ]
+dct int      { #a 0 }
+dct int     -{ #a 0 }
+rec int     ={ #a 0 }
+
+FUNCTIONS
+type        :%{  x x }
+fun  x   x    (      )
+fun  x   x   %{  x x }
+fun sym sym  ~{ #x x }
+
+MAYBES
+maybe int   .=[ #just 0 ]
+maybe int   .nothing
+
+RESULTS
+res str int .=[ #ok   0       ]
+res str int .=[ #err "whoops" ]
 
 
 NO APPLICATION.
@@ -59,7 +198,7 @@ Seriously, if you want to add two numbers, throw them in a tuple and map over th
     -- this creates a union typelet
     -- in Elm, this would be (Right x 2)
 
-    %[ _ :#middle ]
+    %[ _ .middle ]
     -- this also creates a union typelet
     -- in Elm, this would be (Middle)
 
@@ -183,7 +322,7 @@ restructure [ x ] x
 -----------------------------------------
 
 ?server-in
-%{ =:[ #requested
+%{ =:[ .requested
        ={ #id     id
           #path   /echo
           #method :#POST
@@ -198,13 +337,13 @@ restructure [ x ] x
        ]
    ]
 
-   =:[ #requested
+   =:[ .requested
        ={ #id     id
           #path   /user
           #method :#GET
         }
      ]
-   [ =:[ #fetch
+   [ =:[ .fetch
         ={ #name   #user
            #uri    @https://localhost:5432
            #method :#POST
@@ -214,18 +353,18 @@ restructure [ x ] x
       ]
    ]
 
-   =:[ #fetched
+   =:[ .fetched
        =[ #user
-          =:[ #response
+          =:[ .response
               ={ #id id
                }
             ]
-          =:[ #error
+          =:[ .error
               error
             ]
         ]
      ]
-   [ =:[ #respond
+   [ =:[ .respond
          ={ #id     id
             #status 500
             #body   error
@@ -234,18 +373,18 @@ restructure [ x ] x
 
    ]
 
-   =:[ #fetched
+   =:[ .fetched
        =[ #user
-          =:[ #response
+          =:[ .response
               ={ #id id
                }
             ]
-          =:[ #ok
+          =:[ .ok
               user
             ]
         ]
      ]
-   [ =:[ #respond
+   [ =:[ .respond
          ={ #id     id
             #status 200
             #body   user
