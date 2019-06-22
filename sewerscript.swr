@@ -1,0 +1,63 @@
+
+--- The compiler should be able to _always_ create an efficiently-streamable program.
+
+-------------------------------------------------------------------------------
+
+ ?string
+
+ ![ :token
+    =:{ #hyphen  [         ]
+        #newline [         ]
+
+        #comment [         ]
+
+        #unknown [ :string ]
+      }
+  ]
+
+ ![ lex
+    %{ =[  ' ' [                   ] ] [                              ]
+
+       =[  '-' [           ..state ] ] [ .hyphen              ..state ]
+       =[  '-' [ .hyphen   ..state ] ] [ .comment             ..state ]
+
+       =[ '\n' [           ..state ] ] [ .newline             ..state ]
+
+       =[   x  [           ..state ] ] [ .=[ #unknown [ x ] ] ..state ]
+     }
+  ]
+
+%{ text =[ text lex [] ] } string-reduce
+
+array-reverse
+
+-------------------------------------------------------------------------------
+
+ ?[ :token ]
+
+ ![ :ast
+    :TODO
+  ]
+
+ ![ eval
+    %{ 
+     }
+  ]
+
+%{ tokens =[ tokens compile .no-input-error ] } list-reduce
+
+-------------------------------------------------------------------------------
+
+ ?ast
+
+ TODO: typecheck
+
+-------------------------------------------------------------------------------
+
+ ?ast
+
+ TODO: prettify
+
+-------------------------------------------------------------------------------
+
+ ?string
