@@ -1,39 +1,21 @@
 
 --- The compiler should be able to _always_ create an efficiently-streamable program.
 
+--- Sequential folds, grabbing the first member of each array allows us to pipe the results together.
+
 -------------------------------------------------------------------------------
 
  ?string
 
- ![ :token
-    =:{ #hyphen  [         ]
-        #newline [         ]
+ %{ x =[ x ' ' ] }
 
-        #comment [         ]
+  string-split
 
-        #unknown [ :string ]
-      }
-  ]
-
- ![ lex
-    %{ =[  ' ' [                   ] ] [                              ]
-
-       =[  '-' [           ..state ] ] [ .hyphen              ..state ]
-       =[  '-' [ .hyphen   ..state ] ] [ .comment             ..state ]
-
-       =[ '\n' [           ..state ] ] [ .newline             ..state ]
-
-       =[   x  [           ..state ] ] [ .=[ #unknown [ x ] ] ..state ]
-     }
-  ]
-
-%{ text =[ text lex [] ] } string-reduce
-
-array-reverse
+  [ ..string->symbol ]
 
 -------------------------------------------------------------------------------
 
- ?[ :token ]
+ ?[ :symbol ]
 
  ![ :ast
     :TODO
